@@ -62,6 +62,7 @@ public class DirectoryDCP implements Comparable<DirectoryDCP> {
             files -> files.add(file),
             () -> {
                 Set<Path> files = new HashSet<Path>();
+                files.add(file);
                 this.files = Optional.of(files);
             }
         );
