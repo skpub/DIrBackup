@@ -1,69 +1,125 @@
+import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.function.Function;
-import java.util.stream.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.util.*;
 
 public class Directory {
-    private String name;
-    private Set<Path> files = new HashSet<Path>();
-    private Set<Directory> dirs = new HashSet<Directory>();
+    Path path;
+    DirectoryDCP structure;
 
-    Directory(String name) {
-        this.name = name;
-    }
     Directory(Path path) {
-        this.name = path.getFileName().toString();
-        if (!Files.isDirectory(path)) {
-            return;
-        }
-//        Directory_(path, this);
-        Directory_(path, this);
-    }
-    public void Directory_(Path path, Directory ptr) {
-        try (Stream<Path> stream = Files.list(path)) {
-            stream.forEach(p -> {
-                if (Files.isDirectory(p)) {
-                    Directory temp = new Directory(p.getFileName().toString());
-                    ptr.dirs.add(temp);
-                    Directory_(p, temp);
-                } else {
-                    ptr.files.add(p.getFileName());
-                }
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public void print() {
-        int[] indent = {0};
-        print_(this, indent);
+        this.path = path.toAbsolutePath();
+        this.structure = new DirectoryDCP(path, true);
     }
 
-    public void printWithIndent(String str, int[] indent) {
-        for (int i = 0; i < indent[0]; i++) {
-            System.out.print(' ');
-        }
-        System.out.println(str);
+    Directory(Path path, DirectoryDCP dirDCP) {
+        this.path = path.toAbsolutePath();
+        this.structure = dirDCP;
     }
 
-    public void print_(Directory ptr, int[] indent) {
-        printWithIndent(ptr.name, indent);
-        indent[0] += 4;
-        ptr.files.forEach(a -> printWithIndent(a.toString(), indent));
-        ptr.dirs.forEach(a -> print_(a, indent));
-        indent[0] -= 4;
+    public Directory sub(Directory b) {
+        DirectoryDCP temp_structure = new DirectoryDCP(this.path, false);
+        Directory temp = new Directory(this.path, temp_structure);
+        return new Directory(
+            this.path,
+            sub_(
+                this.path.toString(),
+                b.path.toString(),
+                "",
+                this.structure,
+                Optional.ofNullable(b.structure),
+                temp.structure).get()
+        );
     }
 
-    public static void df_function(
-        Directory new_dir,
-        Directory latest_dir
+    public static Optional<DirectoryDCP> sub_(
+        String a_root,
+        String b_root,
+        String rel_current,
+        DirectoryDCP a_ptr,
+        Optional<DirectoryDCP> b_ptr_opt,
+        DirectoryDCP parent
     ) {
-         if (new_dir.dirs == null) return;
+//        Optional<DirectoryDCP> current = Optional.empty();
+        DirectoryDCP current = new DirectoryDCP(Paths.get(a_root + File.separator + rel_current), false);
+        a_ptr.dirs.ifPresent(
+            a_dirs -> {
+                a_dirs.forEach(
+                    (a_dir_path, a_dir) -> {
+                        Optional<DirectoryDCP> new_b
+                            = b_ptr_opt.flatMap(
+                                b_ptr -> b_ptr.dirs.flatMap(
+                                    b_dir -> Optional.ofNullable(b_dir.get(a_dir_path))));
+                        sub_(
+                            a_root,
+                            b_root,
+                            rel_current + File.separator + a_dir_path,
+                            a_dir,
+                            new_b,
+                            current);
+                    }
+                );
+            }
+        );
+        // currentにファイルを突っ込んだ上でparentに入れる
+        b_ptr_opt.ifPresentOrElse(
+            b_ptr -> {
+                b_ptr.files.ifPresentOrElse(
+                    b_files -> {
+                        a_ptr.files.ifPresent(
+                            a_files -> {
+                                a_files.forEach(
+                                    a_file -> {
+                                        if (b_files.contains(a_file)) {
+                                            Path a_abs = Paths.get(a_root + File.separator + rel_current + File.separator + a_file);
+                                            Path b_abs = Paths.get(b_root + File.separator + rel_current + File.separator + a_file);
+                                            FileTime time_a;
+                                            FileTime time_b;
+                                            try {
+                                                time_a = Files.getLastModifiedTime(a_abs);
+                                                time_b = Files.getLastModifiedTime(b_abs);
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                            if (time_a.compareTo(time_b) > 0) {
+                                                current.addFile(a_file);
+                                            }
+                                        }
+                                    }
+                                );
+                            }
+                        );
+                    },
+                    () -> {
+                        a_ptr.files.ifPresent(
+                            a_files -> {
+                                a_files.forEach(current::addFile);
+                            }
+                        );
+                    }
+                );
+            },
+            () -> {
+                a_ptr.files.ifPresent(
+                    a_files -> {
+                        a_files.forEach(current::addFile);
+                    }
+                );
+            }
+        );
+        if (current.files.isEmpty() && current.dirs.isEmpty()) {
+            return Optional.empty();
+        } else {
+            parent.addDirectory(current);
+            return Optional.of(current);
+        }
+    }
 
-//         new_dir.files.entrySet().stream()
+    public void print() {
+        this.structure.print();
     }
 }
