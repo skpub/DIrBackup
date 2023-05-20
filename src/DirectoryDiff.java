@@ -13,17 +13,17 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class DirectoryDiff {
-    private Path name;
+    public Path name;
     private Boolean deleted;
-    private List<Path> deleted_files;
-    private List<Path> created_files;
-    private HashMap<Path, DirectoryDiff> dirs;
+    public HashSet<Path> deleted_files;
+    private HashSet<Path> created_files;
+    public HashMap<Path, DirectoryDiff> dirs;
 
     DirectoryDiff(Path name) {
         this.name = name;
         this.deleted = false;
-        this.deleted_files = new ArrayList<>();
-        this.created_files = new ArrayList<>();
+        this.deleted_files = new HashSet<>();
+        this.created_files = new HashSet<>();
         this.dirs = new HashMap<>();
     }
 
@@ -37,21 +37,21 @@ public class DirectoryDiff {
     }
 
     public DirectoryDiff diff(Path dir_a, Path dir_b) {
-        DirectoryDiff diff = new DirectoryDiff(dir_a);
+        DirectoryDiff diff = new DirectoryDiff(dir_a.getFileName());
         if (!this.exists(dir_a) && !this.exists(dir_b)) return diff;
         if (!this.exists(dir_a)) { // dir_b is exist;
             diff.deleted = true;
             return diff;
         }
 
-        List<Path> a_files = new ArrayList<>();
-        List<Path> a_dirs = new ArrayList<>();
+        HashSet<Path> a_files = new HashSet<>();
+        HashSet<Path> a_dirs = new HashSet<>();
         try (Stream<Path> f_or_dirs = Files.list(dir_a)) {
             f_or_dirs.forEach( file_or_dir -> {
                 if (Files.isDirectory(file_or_dir))
-                    a_dirs.add(file_or_dir);
+                    a_dirs.add(file_or_dir.getFileName());
                 else
-                    a_files.add(file_or_dir);
+                    a_files.add(file_or_dir.getFileName());
             });
         } catch (IOException e){
             throw new UncheckedIOException(e);
@@ -64,7 +64,7 @@ public class DirectoryDiff {
                     Paths.get(dir_a.toString() + File.separator + a_dir.getFileName().toString()),
                     null
                 );
-                diff.dirs.put(a_dir, child);
+                diff.dirs.put(a_dir.getFileName(), child);
             });
             return diff;
         }
@@ -72,91 +72,63 @@ public class DirectoryDiff {
         //////////////////////////////  _|  |_
         // dir_a:EXIST, dir_b:EXIST //  \   /
         //////////////////////////////   \/
-        List<Path> b_files = new ArrayList<>();
-        List<Path> b_dirs = new ArrayList<>();
+        HashSet<Path> b_files = new HashSet<>();
+        HashSet<Path> b_dirs = new HashSet<>();
         try (Stream<Path> f_or_dirs = Files.list(dir_b)) {
             f_or_dirs.forEach( file_or_dir -> {
                 if (Files.isDirectory(file_or_dir))
-                    b_dirs.add(file_or_dir);
+                    b_dirs.add(file_or_dir.getFileName());
                 else
-                    b_files.add(file_or_dir);
+                    b_files.add(file_or_dir.getFileName());
             });
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        Collections.sort(a_files);
-        Collections.sort(a_dirs);
-        Collections.sort(b_files);
-        Collections.sort(b_dirs);
-        int index = 0;
         for (Path a_file: a_files) {
-            for (; index < b_files.size()+1; index++) {
-                if (index == b_files.size() || b_files.get(index).compareTo(a_file) > 0) {
+            if (b_files.contains(a_file)) {
+                FileTime time_a;
+                FileTime time_b;
+                try {
+                    time_a = Files.getLastModifiedTime(Paths.get(
+                        dir_a.toString() + File.separator + a_file.toString()));
+                    time_b = Files.getLastModifiedTime(Paths.get(
+                        dir_b.toString() + File.separator + a_file.toString()));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                if (time_a.compareTo(time_b) > 0) {
                     diff.created_files.add(a_file);
-                    break;
-                }
-                if (b_files.get(index) == a_file) {
-                    FileTime time_a;
-                    FileTime time_b;
-                    try {
-                        time_a = Files.getLastModifiedTime(a_file);
-                        time_b = Files.getLastModifiedTime(b_files.get(index));
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                    if (time_a.compareTo(time_b) > 0)
-                        diff.created_files.add(a_file);
-                    break;
                 }
             }
+            diff.created_files.add(a_file);
         }
-        index = 0;
         for (Path b_file: b_files) {
-            for (; index < a_files.size()+1; index++) {
-                if (index == a_files.size() || a_files.get(index).compareTo(b_file) > 0) {
-                    diff.deleted_files.add(b_file);
-                    break;
-                }
-                if (a_files.get(index) == b_file) {
-                    // ALREADY EXAMINED THIS PATTERN.
-                    // a file_x in A and B means that a file_x in B and A
-                    break;
-                }
+            if (!a_files.contains(b_file)) {
+                diff.deleted_files.add(b_file);
             }
         }
 
-        index = 0;
         for (Path a_dir: a_dirs) {
-            for (; index < b_dirs.size()+1; index++) {
-                if (index == b_dirs.size() || b_dirs.get(index).compareTo(a_dir) > 0) {
-                    // CREATED.
-                    DirectoryDiff temp = diff(a_dir, null);
-                    diff.dirs.put(a_dir, temp);
-                    break;
-                }
-                if (b_dirs.get(index) == a_dir) {
-                    DirectoryDiff temp = diff(a_dir, b_dirs.get(index));
-                    diff.dirs.put(a_dir, temp);
-                    break;
-                }
+            if (b_dirs.contains(a_dir)) {
+                DirectoryDiff temp = this.diff(
+                    Paths.get(dir_a.toString() + File.separator + a_dir.toString()),
+                    Paths.get(dir_b.toString() + File.separator + a_dir.toString())
+                );
+                diff.dirs.put(a_dir, temp);
+            }
+            else {
+                diff.dirs.put(a_dir, this.diff(
+                    Paths.get(dir_a.toString() + File.separator + a_dir.toString()),
+                    null
+                ));
             }
         }
 
-        index = 0;
         for (Path b_dir: b_dirs) {
-            for (; index < a_dirs.size()+1; index++) {
-                if (index == a_dirs.size() || a_dirs.get(index).compareTo(b_dir) > 0) {
-                    // DELETED.
-                    DirectoryDiff temp = new DirectoryDiff(b_dir);
-                    temp.deleted = true;
-                    diff.dirs.put(b_dir, temp);
-                    break;
-                }
-                if (a_dirs.get(index) == b_dir) {
-                    // ALREADY EXAMINED THIS PATTERN.
-                    // a dir_x in A and B means that a dir_x in B and A
-                    break;
-                }
+            if (!a_dirs.contains(b_dir)) {
+                DirectoryDiff temp = new DirectoryDiff(b_dir);
+                temp.deleted = true;
+                diff.dirs.put(b_dir, temp);
             }
         }
         return diff;
@@ -177,10 +149,11 @@ public class DirectoryDiff {
         print_(this, 0);
     }
     public void print_(DirectoryDiff ptr, int indent) {
-        println_with_indent((ptr.deleted? "deleted: ": "created: ") + ptr.name.toString(), indent);
+        println_with_indent((ptr.deleted? "deleted: ": "") + ptr.name.toString(), indent);
         indent += 4;
-        for (Path file: ptr.deleted_files)
+        for (Path file: ptr.deleted_files) {
             println_with_indent("deleted: " + file.toString(), indent);
+        }
         for (Path file: ptr.created_files)
             println_with_indent("created: " + file.toString(), indent);
         for (Map.Entry<Path, DirectoryDiff> dir: ptr.dirs.entrySet())
