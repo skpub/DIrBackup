@@ -4,10 +4,14 @@
 ### diff
 ```java
 DirectoryDiff diff = new DirectoryDiff(
-    Paths.get("Path/to/A"),
-    Paths.get("Path/to/B")
+    Paths.get("test\\A"),
+    Paths.get("test\\B")
 );
 diff.print();
+
+List<Path> deleted = diff.deletedEntries();
+System.out.println("====# DELETED #====");
+deleted.forEach(System.out::println);
 ```
 ```
 A
@@ -22,6 +26,12 @@ A
     A_B
         deleted: deleted.bmp
     deleted: B_A
+====# DELETED #====
+deleted.bmp
+A_A\deleted.txt
+A_A\deleted.bmp
+A_B\deleted.bmp
+B_A
 ```
 
 ### incr

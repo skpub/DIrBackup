@@ -134,6 +134,27 @@ public class DirectoryDiff {
         return diff;
     }
 
+    public List<Path> deletedEntries() {
+        List<Path> deleted_entries = new ArrayList<>();
+        deletedEntries_("", this, deleted_entries);
+        return deleted_entries;
+    }
+    public void deletedEntries_(String current, DirectoryDiff ptr, List<Path> deleted_entries) {
+        if (ptr.deleted) {
+            deleted_entries.add(Paths.get(current));
+            return;
+        }
+        String parent = Objects.equals(current, "") ? "" : current + File.separator;
+        ptr.deleted_files.forEach(file -> {
+            deleted_entries.add(Paths.get(parent + file));
+        });
+        ptr.dirs.forEach((path, dir) -> {
+            deletedEntries_(parent + path, dir, deleted_entries);
+        });
+        return;
+    }
+
+
     public boolean exists(Path f) {
         if (f == null) return false;
         return Files.exists(f);
