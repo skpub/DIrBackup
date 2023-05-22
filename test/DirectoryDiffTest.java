@@ -7,16 +7,22 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DirectoryDiffTest {
-    @Test
-    public void test() {
-        DirectoryDiff diff = new DirectoryDiff(
-            Paths.get("test\\A"),
-            Paths.get("test\\B")
-        );
-        diff.print();
+//    @Test
+//    public void testDiff() {
+//        DirectoryDiff diff = new DirectoryDiff(
+//            Paths.get("test\\A"),
+//            Paths.get("test\\B")
+//        );
+//        diff.print();
+//
+//        List<Path> deleted = diff.deletedEntries();
+//        System.out.println("====# DELETED #====");
+//        deleted.forEach(System.out::println);
+//    }
 
-        List<Path> deleted = diff.deletedEntries();
-        System.out.println("====# DELETED #====");
-        deleted.forEach(System.out::println);
+    @Test
+    public void testDCopy() {
+        DCopy copy = new DCopy(Paths.get("test\\A"), Paths.get("test\\B"));
+        copy.dcopy();
     }
 }

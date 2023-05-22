@@ -13,11 +13,23 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class DirectoryDiff {
-    public Path name;
+    private Path name;
     private Boolean deleted;
-    public HashSet<Path> deleted_files;
+    private HashSet<Path> deleted_files;
     private HashSet<Path> created_files;
-    public HashMap<Path, DirectoryDiff> dirs;
+    private HashMap<Path, DirectoryDiff> dirs;
+
+    public HashSet<Path> created_files() {
+        return this.created_files;
+    }
+
+    public HashMap<Path, DirectoryDiff> dirs() {
+        return this.dirs;
+    }
+
+    public Path name() {
+        return this.name;
+    }
 
     DirectoryDiff(Path name) {
         this.name = name;
