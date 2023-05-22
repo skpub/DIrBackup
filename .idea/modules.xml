@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DIrCopy.iml" filepath="$PROJECT_DIR$/DIrCopy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/DIrBackup.iml" filepath="$PROJECT_DIR$/DIrBackup.iml" />
     </modules>
   </component>
 </project>

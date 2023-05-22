@@ -12,18 +12,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-public class DCopy {
+public class DBackup {
     private Path target;
     private Path backup;
     private Path full;
 
-    DCopy(Path target, Path backup) {
+    DBackup(Path target, Path backup) {
         this.target = target.toAbsolutePath();
         this.backup = backup.toAbsolutePath();
         this.full = Paths.get(backup.toString() + File.separator + "full");
     }
 
-    public void dcopy() {
+    public void dBackup() {
         if (!Files.exists(full)) {
             try {
                 this.fullBackup();
@@ -37,15 +37,13 @@ public class DCopy {
         SimpleDateFormat date_format = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
         String str_date = date_format.format(date);
 
-        this.dcopy_("", str_date, diff);
+        this.dBackup_("", str_date, diff);
         try (BufferedWriter bw =
              Files.newBufferedWriter(
                  Paths.get(backup + File.separator + str_date + File.separator + "deleted"),
                  StandardCharsets.UTF_8))
         {
             List<Path> deleted_entries = diff.deletedEntries();
-            System.out.println(deleted_entries);
-
             for (Path deleted_entry: deleted_entries) {
                 bw.write(deleted_entry.toString());
                 bw.newLine();
@@ -54,9 +52,9 @@ public class DCopy {
             throw new UncheckedIOException(e);
         }
     }
-    public void dcopy_(String current, String date, DirectoryDiff diff) {
+    public void dBackup_(String current, String date, DirectoryDiff diff) {
         String target_current = target + File.separator + current;
-        String backup_current = backup + File.separator + date + File.separator + "data" + File.separator + current;
+        String backup_current = backup + File.separator + date + File.separator + target.getFileName() + File.separator + current;
         try {
             Files.createDirectories(Paths.get(backup_current));
         } catch (IOException e) {
@@ -73,7 +71,7 @@ public class DCopy {
             }
         });
         diff.dirs().forEach((path, dir) -> {
-            dcopy_(
+            dBackup_(
                 current + File.separator + dir.name(),
                 date,
                 dir

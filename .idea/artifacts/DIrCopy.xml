@@ -1,9 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="DIrCopy">
-    <output-path>$PROJECT_DIR$/out/artifacts/DIrCopy</output-path>
-    <root id="archive" name="DIrCopy.jar">
-      <element id="module-output" name="DIrCopy" />
-      <element id="module-source" name="DIrCopy" />
-    </root>
-  </artifact>
-</component>

@@ -22,7 +22,7 @@ class DirectoryDiffTest {
 
     @Test
     public void testDCopy() {
-        DCopy copy = new DCopy(Paths.get("test\\A"), Paths.get("test\\B"));
-        copy.dcopy();
+        DBackup bkup = new DBackup(Paths.get("test\\A"), Paths.get("test\\B"));
+        bkup.dBackup();
     }
 }

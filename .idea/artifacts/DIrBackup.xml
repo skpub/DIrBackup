@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="DIrBackup">
+    <output-path>$PROJECT_DIR$/out/artifacts/DIrBackup</output-path>
+    <root id="archive" name="DIrBackup.jar">
+      <element id="module-source" name="DIrBackup" />
+      <element id="module-output" name="DIrBackup" />
+    </root>
+  </artifact>
+</component>

@@ -40,7 +40,7 @@ public class DirectoryDiff {
     }
 
     DirectoryDiff(Path dir_a, Path dir_b) {
-        DirectoryDiff temp = diff(dir_a, dir_b);
+        DirectoryDiff temp = diff(dir_a.toAbsolutePath(), dir_b.toAbsolutePath());
         this.name = temp.name;
         this.deleted = false;
         this.deleted_files = temp.deleted_files;
