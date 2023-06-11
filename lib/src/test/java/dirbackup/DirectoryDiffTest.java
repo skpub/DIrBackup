@@ -1,10 +1,9 @@
+package dirbackup;
+
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 class DirectoryDiffTest {
 //    @Test
@@ -22,7 +21,7 @@ class DirectoryDiffTest {
 
     @Test
     public void testDCopy() {
-        DBackup bkup = new DBackup(Paths.get("test\\A"), Paths.get("test\\B"));
+        DBackup bkup = new DBackup(Paths.get("..\\test\\A"), Paths.get("..\\test\\B"));
         bkup.dBackup();
     }
 }
