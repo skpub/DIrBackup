@@ -1,3 +1,5 @@
+package dirbackup;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +15,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class DBackup {
-    private Path target;
-    private Path backup;
-    private Path full;
+    private final Path target;
+    private final Path backup;
+    private final Path full;
 
     DBackup(Path target, Path backup) {
         this.target = target.toAbsolutePath();
@@ -26,6 +28,7 @@ public class DBackup {
     public void dBackup() {
         if (!Files.exists(full)) {
             try {
+                Files.createDirectories(backup);
                 this.fullBackup();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
