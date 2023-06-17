@@ -31,7 +31,7 @@ publishing {
     }
 }
 
-group 'com.skpub'
+group 'org.sk-dev'
 version '1.0.0'
 
 repositories {
