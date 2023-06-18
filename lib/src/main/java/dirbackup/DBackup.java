@@ -19,7 +19,7 @@ public class DBackup {
     private final Path backup;
     private final Path full;
 
-    DBackup(Path target, Path backup) {
+    public DBackup(Path target, Path backup) {
         this.target = target.toAbsolutePath();
         this.backup = backup.toAbsolutePath();
         this.full = Paths.get(backup.toString() + File.separator + "full");
@@ -55,7 +55,7 @@ public class DBackup {
             throw new UncheckedIOException(e);
         }
     }
-    public void dBackup_(String current, String date, DirectoryDiff diff) {
+    private void dBackup_(String current, String date, DirectoryDiff diff) {
         String target_current = target + File.separator + current;
         String backup_current = backup + File.separator + date + File.separator + target.getFileName() + File.separator + current;
         try {
